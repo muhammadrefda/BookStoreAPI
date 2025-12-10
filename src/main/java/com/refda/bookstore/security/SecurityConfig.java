@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableMethodSecurity // Biar bisa pakai @PreAuthorize di Controller
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
@@ -27,19 +27,16 @@ public class SecurityConfig {
         this.authTokenFilter = authTokenFilter;
     }
 
-    // 1. Password Encoder (Hash password)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 2. Authentication Manager (Buat login)
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
-    // 3. Provider Auth (Koneksi ke DB + Password Encoder)
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -48,25 +45,25 @@ public class SecurityConfig {
         return authProvider;
     }
 
-    // 4. Security Filter Chain (Aturan Main Security)
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF karena pakai Token
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless (Rest API)
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoint Auth (Login/Register) -> BOLEH DIAKSES SIAPAPUN
                         .requestMatchers("/auth/**").permitAll()
-                        // Endpoint Swagger/H2 (Kalau ada) -> Boleh
+
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html", "/v3/api-docs/swagger-config"
+                        ).permitAll()
+
                         .requestMatchers("/error").permitAll()
-                        // Sisanya -> HARUS LOGIN
+                        .requestMatchers("/books/*/image").permitAll()
+
                         .anyRequest().authenticated()
                 );
 
-        // Tambahkan Provider kita
         http.authenticationProvider(authenticationProvider());
 
-        // Tambahkan Filter JWT kita sebelum filter bawaan Spring
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
