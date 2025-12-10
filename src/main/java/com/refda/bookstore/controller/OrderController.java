@@ -28,10 +28,8 @@ public class OrderController {
     @Autowired
     private UserRepository userRepository;
 
-    // POST /orders (User Only)
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest) {
-        // Ambil User yang sedang login
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         User user = userRepository.findByEmail(email)
@@ -45,25 +43,22 @@ public class OrderController {
         }
     }
 
-    // GET /orders (User lihat punya sendiri, Admin lihat semua)
     @GetMapping
     public List<Order> getAllOrders() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
-        // Cek Role
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ADMIN"));
 
         if (isAdmin) {
-            return orderRepository.findAll(); // Admin lihat semua
+            return orderRepository.findAll();
         } else {
             User user = userRepository.findByEmail(email).get();
-            return orderRepository.findByUser(user); // User lihat punya sendiri
+            return orderRepository.findByUser(user);
         }
     }
 
-    // POST /orders/{id}/pay (Simulasi Bayar)
     @PostMapping("/{id}/pay")
     public ResponseEntity<?> payOrder(@PathVariable Long id) {
         try {

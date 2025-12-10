@@ -25,11 +25,9 @@ public class BookController {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    // POST: Create Book (Admin Only)
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<?> createBook(@RequestBody Book book) {
-        // Validasi category ada atau tidak
         if (book.getCategory() != null && book.getCategory().getId() != null) {
             Category cat = categoryRepository.findById(book.getCategory().getId())
                     .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -38,8 +36,6 @@ public class BookController {
         return ResponseEntity.ok(bookRepository.save(book));
     }
 
-    // GET: Search, Filter, Pagination (User & Admin)
-    // Contoh URL: /books?page=0&size=10&search=Harry&categoryId=1
     @GetMapping
     public Page<Book> getAllBooks(
             @RequestParam(defaultValue = "0") int page,
@@ -50,13 +46,10 @@ public class BookController {
         Pageable pageable = PageRequest.of(page, size);
 
         if (categoryId != null) {
-            // Filter by Category
             return bookRepository.findByCategoryId(categoryId, pageable);
         } else if (search != null && !search.isEmpty()) {
-            // Search by Title/Author
             return bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(search, search, pageable);
         } else {
-            // Get All
             return bookRepository.findAll(pageable);
         }
     }

@@ -31,14 +31,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         try {
             String jwt = parseJwt(request);
 
-            // Jika token ada dan valid
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String email = jwtUtils.getEmailFromJwtToken(jwt);
 
-                // Load user detail dari DB
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                // Set Authentication ke Context (Mirip HttpContext.User di .NET)
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
@@ -56,12 +53,11 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // Helper: Ambil token dari header "Authorization: Bearer <token>"
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
 
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
-            return headerAuth.substring(7); // Ambil karakter setelah "Bearer "
+            return headerAuth.substring(7);
         }
 
         return null;

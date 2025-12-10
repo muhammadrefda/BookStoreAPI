@@ -9,10 +9,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface BookRepository extends JpaRepository<Book, Long> {
 
-    // Fitur Search (Title atau Author) + Pagination
-    // SELECT * FROM books WHERE title LIKE %keyword% OR author LIKE %keyword%
     Page<Book> findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(String title, String author, Pageable pageable);
 
-    // Fitur Filter by Category
     Page<Book> findByCategoryId(Integer categoryId, Pageable pageable);
+
+    @Query("SELECT MAX(b.price), MIN(b.price), AVG(b.price) FROM Book b")
+    Object[] findPriceStats();
 }
